@@ -60,7 +60,7 @@ Claude Code 拿到文字描述，继续正常对话
   "mcpServers": {
     "mimo-vision": {
       "command": "npx",
-      "args": ["-y", "@gbz666/mimo-vision-mcp"],
+      "args": ["-y", "@makoto82/mimo-vision-mcp"],
       "env": {
         "MIMO_API_KEY": "your-api-key-here"
       }

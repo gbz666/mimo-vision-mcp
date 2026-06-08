@@ -1,5 +1,5 @@
 {
-  "name": "@gbz666/mimo-vision-mcp",
+  "name": "@makoto82/mimo-vision-mcp",
   "version": "1.0.0",
   "description": "MCP server providing image recognition for Claude Code via MiMo 2.5 vision model",
   "keywords": [
