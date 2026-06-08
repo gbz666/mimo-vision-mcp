@@ -1,0 +1,37 @@
+{
+  "name": "@gbz666/mimo-vision-mcp",
+  "version": "1.0.0",
+  "description": "MCP server providing image recognition for Claude Code via MiMo 2.5 vision model",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mimo",
+    "vision",
+    "image-recognition",
+    "claude",
+    "claude-code"
+  ],
+  "homepage": "https://github.com/gbz666/mimo-vision-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gbz666/mimo-vision-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gbz666/mimo-vision-mcp/issues"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "mimo-vision-mcp": "bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "mimo_vision.py",
+    "requirements.txt"
+  ],
+  "engines": {
+    "node": ">=16"
+  }
+}

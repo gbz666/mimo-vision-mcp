@@ -45,64 +45,71 @@ Claude Code 拿到文字描述，继续正常对话
 
 主模型保持 `mimo-v2.5-pro` 的高性能，图片识别通过 MCP 借助 `mimo-2.5` 完成，互不干扰。
 
-## 安装
+---
 
-### 1. 克隆仓库
+## 完整配置步骤
 
-```bash
-git clone https://github.com/gbz666/mimo-vision-mcp.git
-cd mimo-vision-mcp
-```
+**前提：** 系统已安装 Node.js 16+ 和 Python 3.10+
 
-### 2. 安装依赖
+### 第一步：注册 MCP 服务器
 
-```bash
-cd mcp-servers/mimo-vision
-python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# macOS / Linux
-source .venv/bin/activate
-
-pip install -r requirements.txt
-```
-
-### 3. 配置环境变量
-
-环境变量会从两个地方读取（优先级从高到低）：
-
-1. **Claude Code settings.json 的 `env` 字段**（推荐）—— MCP 进程启动时自动注入，无需手动设置系统变量
-2. **系统环境变量** —— 如果 settings.json 中未配置，则 fallback 到系统环境变量
-
-可配置项：
-
-| 变量 | 必填 | 默认值 | 说明 |
-|------|------|--------|------|
-| `MIMO_API_KEY` | 是 | - | MiMo API Key |
-| `MIMO_API_BASE` | 否 | `https://token-plan-cn.xiaomimimo.com/anthropic` | API 地址 |
-| `MIMO_MODEL` | 否 | `mimo-2.5` | 视觉模型名称 |
-
-> 建议搭配 [ccswitch](https://github.com/gbz666/ccswitch) 一起使用，方便快速切换 API Key 和模型配置。
-
-### 4. 注册 MCP 服务器
-
-编辑 Claude Code 配置文件 `~/.claude/settings.json`，在 `mcpServers` 字段中添加：
+编辑 Claude Code 全局配置文件 `~/.claude/settings.json`，在 `mcpServers` 字段中添加：
 
 ```json
 {
   "mcpServers": {
     "mimo-vision": {
-      "command": "python",
-      "args": ["C:/Users/<你的用户名>/.claude/mcp-servers/mimo-vision/mimo_vision.py"],
+      "command": "npx",
+      "args": ["-y", "@gbz666/mimo-vision-mcp"],
       "env": {
-        "MIMO_API_KEY": "your-api-key"
+        "MIMO_API_KEY": "your-api-key-here"
       }
     }
   }
 }
 ```
 
-重启 Claude Code 即可生效。
+把 `your-api-key-here` 换成你的 MiMo API Key。
+
+> **`settings.json` 在哪里？**
+> - Windows：`C:\Users\<你的用户名>\.claude\settings.json`
+> - macOS / Linux：`~/.claude/settings.json`
+>
+> 如果文件不存在，新建一个即可。
+
+### 第二步：配置图片读取规则
+
+编辑全局提示词文件 `~/.claude/CLAUDE.md`，加入以下内容：
+
+```markdown
+# 图片读取规则
+当模型为 mimov2.5pro 时，读取图片必须优先使用 mimo-vision MCP 提供的
+`mcp__mimo-vision__describe_image` 或 `mcp__mimo-vision__ocr_image` 工具，
+不要用 Read 工具直接读取图片。
+```
+
+> **为什么需要这一步？**
+> 仅安装 MCP 服务器还不够。若没有提示词约束，Claude Code 在遇到图片时仍可能尝试用 Read 工具直接读取图片，触发模型报错导致会话崩溃。
+
+### 第三步：重启 Claude Code
+
+重启后，`npx` 会自动下载包 → 自动安装 Python 依赖 → 自动启动服务器。全程无需手动操作，以后每次启动 Claude Code 也都会自动管理。
+
+---
+
+## 环境变量说明
+
+| 变量 | 必填 | 默认值 | 说明 |
+|------|------|--------|------|
+| `MIMO_API_KEY` | 是 | — | MiMo API Key |
+| `MIMO_API_BASE` | 否 | `https://token-plan-cn.xiaomimimo.com/anthropic` | API 地址 |
+| `MIMO_MODEL` | 否 | `mimo-2.5` | 视觉模型名称 |
+
+环境变量在 `settings.json` 的 `env` 字段中配置，Claude Code 启动 MCP 进程时自动注入，无需手动设置系统变量。
+
+> 建议搭配 [ccswitch](https://github.com/gbz666/ccswitch) 使用，方便快速切换 API Key 和模型配置。
+
+---
 
 ## 提供的工具
 
@@ -113,7 +120,7 @@ pip install -r requirements.txt
 
 ### 使用示例
 
-在 Claude Code 中直接说：
+配置完成后，在 Claude Code 中直接说：
 
 ```
 帮我看看这张截图的内容：D:\screenshots\error.png
@@ -121,19 +128,7 @@ pip install -r requirements.txt
 
 Claude Code 会自动调用 `describe_image` 工具，无需手动指定。
 
-## 重要：配置系统级提示词
-
-**仅安装 MCP 服务器还不够。** 如果不加提示词约束，Claude Code 在遇到图片时仍可能尝试用 Read 工具直接读取图片，触发模型报错导致会话崩溃。
-
-**必须**在全局提示词文件 `~/.claude/CLAUDE.md` 中加入以下规则：
-
-```markdown
-# 图片读取规则
-
-当模型为 mimov2.5pro 时，读取图片必须优先使用 mimo-vision MCP 提供的 `mcp__mimo-vision__describe_image` 或 `mcp__mimo-vision__ocr_image` 工具，不要用 Read 工具直接读取图片。
-```
-
-> 为什么是全局 `~/.claude/CLAUDE.md` 而不是项目级？因为这个问题与具体项目无关，只要主模型是 `mimo-v2.5-pro`，任何项目都会遇到。放在全局配置中才能保证所有项目生效。
+---
 
 ## 已知限制：VS Code 终端无法直接拖入图片
 
@@ -150,7 +145,7 @@ It may not exist or you may not have access to it.
 Run /model to pick a different model.
 ```
 
-**替代方案：** 先将图片保存到本地文件，然后告诉 Claude 图片路径，Claude 会通过 mimo-vision MCP 工具进行识别。
+**替代方案：** 先将图片保存到本地文件，然后告诉 Claude 图片路径：
 
 ```
 帮我看看这张截图：D:\screenshots\error.png
@@ -158,9 +153,38 @@ Run /model to pick a different model.
 
 > 根本原因是 Claude Code 在终端拖入图片时会直接将图片内联发送给模型，绕过了 MCP 工具调用流程，目前无法拦截或重定向。
 
+---
+
+## 手动安装（不依赖 Node.js）
+
+如果你不想用 npx，也可以手动安装：
+
+```bash
+git clone https://github.com/gbz666/mimo-vision-mcp.git
+cd mimo-vision-mcp
+pip install mcp httpx
+```
+
+然后在 `settings.json` 中改为：
+
+```json
+{
+  "mcpServers": {
+    "mimo-vision": {
+      "command": "python",
+      "args": ["/path/to/mimo-vision-mcp/mimo_vision.py"],
+      "env": {
+        "MIMO_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+---
+
 ## 依赖
 
 - Python 3.10+
 - `mcp>=1.0.0`
 - `httpx>=0.27.0`
-
